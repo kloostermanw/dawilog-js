@@ -7,5 +7,9 @@ module.exports = {
   ignorePatterns: ['dist', 'node_modules', '*.config.ts'],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
   },
 };
