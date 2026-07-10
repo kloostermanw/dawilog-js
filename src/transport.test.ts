@@ -5,7 +5,9 @@ import type { DawilogEvent } from './types';
 const URL = 'https://log.dawi.dev/dwlog/event/acme/web-app/uuid';
 const event = { event_id: 'x', timestamp: 't', exceptions: [] } as unknown as DawilogEvent;
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('sendEvent', () => {
   it('POSTs via fetch with JSON body when not unloading', () => {
@@ -26,7 +28,7 @@ describe('sendEvent', () => {
   });
 
   it('uses sendBeacon when unloading and available', () => {
-    const beacon = vi.fn(() => true);
+    const beacon = vi.fn((_url: string, _body?: BodyInit) => true);
     vi.stubGlobal('navigator', { sendBeacon: beacon });
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

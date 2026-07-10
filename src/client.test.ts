@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { Client } from './client';
 import * as transport from './transport';
 
 const DSN = 'log.dawi.dev:550e8400-e29b-41d4-a716-446655440000:acme:web-app';
 
-let sendSpy: ReturnType<typeof vi.spyOn>;
+let sendSpy: MockInstance;
 beforeEach(() => {
   sendSpy = vi.spyOn(transport, 'sendEvent').mockImplementation(() => {});
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('Client', () => {
   it('captures an exception and sends it to the endpoint URL', () => {

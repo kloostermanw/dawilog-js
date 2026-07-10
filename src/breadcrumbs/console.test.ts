@@ -2,7 +2,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { installConsoleBreadcrumbs } from './console';
 import { Scope } from '../scope';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('installConsoleBreadcrumbs', () => {
   it('records a breadcrumb per console call and still logs', () => {

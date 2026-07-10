@@ -4,7 +4,9 @@ import { Scope } from '../scope';
 
 const IGNORE = 'https://log.dawi.dev/dwlog/event/acme/web-app/uuid';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('installHttpBreadcrumbs (fetch)', () => {
   it('records a breadcrumb for a fetch call', async () => {
