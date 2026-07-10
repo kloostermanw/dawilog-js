@@ -38,7 +38,13 @@ export function sendEvent(url: string, event: DawilogEvent, options: SendOptions
       typeof navigator.sendBeacon === 'function'
     ) {
       const blob = new Blob([body], { type: CONTENT_TYPE });
-      navigator.sendBeacon(url, blob);
+      const queued = navigator.sendBeacon(url, blob);
+      if (debug && !queued) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[dawilog] sendBeacon refused the payload (queue full or over the ~64KB limit); event dropped',
+        );
+      }
       return;
     }
 

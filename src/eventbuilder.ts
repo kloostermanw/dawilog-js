@@ -21,8 +21,9 @@ export function collectServerVars(): Record<string, string> {
 
 function buildMeta(ctx: BuildContext): Record<string, unknown> {
   const meta: Record<string, unknown> = {};
-  if (ctx.scope.user) meta.user = ctx.scope.user;
-  meta.dawilog_session_data = ctx.scope.tags;
+  // Copy so a beforeSend that mutates the event cannot corrupt the shared scope.
+  if (ctx.scope.user) meta.user = { ...ctx.scope.user };
+  meta.dawilog_session_data = { ...ctx.scope.tags };
   meta.breadcrumbs = ctx.scope.getBreadcrumbs();
   return meta;
 }

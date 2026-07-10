@@ -47,6 +47,48 @@ describe('Client', () => {
     expect(sendSpy).not.toHaveBeenCalled();
   });
 
+  it('treats an out-of-range sampleRate as 1 and sends', () => {
+    const client = new Client({ dsn: DSN, sampleRate: -1 });
+    client.captureException(new Error('x'));
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
+  it('treats a NaN sampleRate as 1 and sends', () => {
+    const client = new Client({ dsn: DSN, sampleRate: Number.NaN });
+    client.captureException(new Error('x'));
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
+  it('sends via beacon after setUnloading(true)', () => {
+    const client = new Client({ dsn: DSN });
+    client.setUnloading(true);
+    client.captureException(new Error('boom'));
+    expect(sendSpy.mock.calls[0][2]).toMatchObject({ useBeacon: true });
+  });
+
+  it('sends via keepalive fetch (not beacon) by default', () => {
+    const client = new Client({ dsn: DSN });
+    client.captureException(new Error('boom'));
+    expect(sendSpy.mock.calls[0][2]).toMatchObject({ useBeacon: false });
+  });
+
+  it('sends the event returned by beforeSend', () => {
+    const client = new Client({ dsn: DSN, beforeSend: (e) => ({ ...e, release: 'patched' }) });
+    client.captureException(new Error('x'));
+    expect(sendSpy.mock.calls[0][1].release).toBe('patched');
+  });
+
+  it('drops the event but does not throw when beforeSend throws', () => {
+    const client = new Client({
+      dsn: DSN,
+      beforeSend: () => {
+        throw new Error('hook bug');
+      },
+    });
+    expect(() => client.captureException(new Error('x'))).not.toThrow();
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
   it('captureMessage sends a Message exception with the level in meta', () => {
     new Client({ dsn: DSN }).captureMessage('hello', 'warning');
     const event = sendSpy.mock.calls[0][1];

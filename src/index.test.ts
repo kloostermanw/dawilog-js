@@ -46,4 +46,15 @@ describe('public API', () => {
   it('API calls before init are safe no-ops', () => {
     expect(() => captureException(new Error('x'))).not.toThrow();
   });
+
+  it('init called twice returns the same client and installs handlers once', () => {
+    const sendSpy = vi.spyOn(transport, 'sendEvent').mockImplementation(() => {});
+    const first = init({ dsn: DSN });
+    const second = init({ dsn: DSN });
+    expect(second).toBe(first);
+
+    window.dispatchEvent(new ErrorEvent('error', { error: new Error('boom'), message: 'boom' }));
+    // Handlers were installed only once despite two init calls.
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
 });

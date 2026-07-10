@@ -31,6 +31,18 @@ describe('installGlobalHandlers', () => {
     teardown();
   });
 
+  it('sets unloading true when the tab becomes hidden', () => {
+    const client = new Client({ dsn: DSN });
+    const spy = vi.spyOn(client, 'setUnloading');
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const teardown = installGlobalHandlers(client);
+
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(spy).toHaveBeenLastCalledWith(true);
+    teardown();
+  });
+
   it('resets unloading to false when the tab becomes visible again', () => {
     const client = new Client({ dsn: DSN });
     const spy = vi.spyOn(client, 'setUnloading');

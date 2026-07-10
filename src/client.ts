@@ -16,6 +16,35 @@ interface ResolvedOptions extends DawilogOptions {
 // events the server would only dedup anyway.
 const DEDUP_WINDOW_MS = 5000;
 
+// sampleRate is a fraction in [0, 1]; anything else (negative, >1, NaN) is a
+// caller mistake that would otherwise silently drop or send everything, so fall
+// back to 1 (send all) and warn in debug.
+function normalizeSampleRate(value: number | undefined, debug?: boolean): number {
+  if (value === undefined) return 1;
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    if (debug) {
+      // eslint-disable-next-line no-console
+      console.warn(`[dawilog] invalid sampleRate ${value}; using 1`);
+    }
+    return 1;
+  }
+  return value;
+}
+
+// maxBreadcrumbs must be a non-negative integer; a negative value would make the
+// buffer clear itself on every add. Fall back to the default and warn in debug.
+function normalizeMaxBreadcrumbs(value: number | undefined, debug?: boolean): number {
+  if (value === undefined) return 30;
+  if (!Number.isFinite(value) || value < 0) {
+    if (debug) {
+      // eslint-disable-next-line no-console
+      console.warn(`[dawilog] invalid maxBreadcrumbs ${value}; using 30`);
+    }
+    return 30;
+  }
+  return Math.floor(value);
+}
+
 export class Client {
   private readonly dsn: ParsedDsn | null;
   private readonly options: ResolvedOptions;
@@ -29,9 +58,9 @@ export class Client {
     this.options = {
       environment: 'production',
       release: '',
-      sampleRate: 1.0,
-      maxBreadcrumbs: 30,
       ...options,
+      sampleRate: normalizeSampleRate(options.sampleRate, options.debug),
+      maxBreadcrumbs: normalizeMaxBreadcrumbs(options.maxBreadcrumbs, options.debug),
     };
     this.scope = new Scope(this.options.maxBreadcrumbs);
     this.enabled = this.dsn !== null;
@@ -77,7 +106,16 @@ export class Client {
   private dispatch(event: DawilogEvent): void {
     if (!this.enabled || !this.dsn) return;
     let final: DawilogEvent | null = event;
-    if (this.options.beforeSend) final = this.options.beforeSend(event);
+    if (this.options.beforeSend) {
+      try {
+        final = this.options.beforeSend(event);
+      } catch (e) {
+        // A throwing beforeSend must not silently disable all reporting. Drop
+        // this event (it may be half-transformed) but surface the bug in debug.
+        this.internalError(e);
+        return;
+      }
+    }
     if (!final) return;
     if (this.isDuplicate(final)) return;
     if (this.options.sampleRate < 1 && Math.random() >= this.options.sampleRate) return;

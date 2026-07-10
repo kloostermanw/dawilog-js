@@ -8,11 +8,19 @@ export function installGlobalHandlers(client: Client): () => void {
 
   const onRejection = (event: PromiseRejectionEvent): void => {
     const reason = event.reason;
-    const err =
-      reason instanceof Error
-        ? reason
-        : new Error(typeof reason === 'string' ? reason : JSON.stringify(reason));
-    client.captureException(err);
+    if (reason instanceof Error) {
+      client.captureException(reason);
+      return;
+    }
+    let message: string;
+    try {
+      message = typeof reason === 'string' ? reason : JSON.stringify(reason);
+    } catch {
+      // A circular or otherwise non-serializable reason must not make the SDK's
+      // own global handler throw, which would lose the rejection entirely.
+      message = String(reason);
+    }
+    client.captureException(new Error(message));
   };
 
   // pagehide is terminal: the page is going away, flush via sendBeacon.
