@@ -12,7 +12,13 @@ let teardowns: Array<() => void> = [];
 const DEFAULT_INTEGRATIONS = { console: true, dom: true, fetch: true, history: true };
 
 export function init(options: DawilogOptions): Client {
-  if (current) return current;
+  if (current) {
+    if (options.debug) {
+      // eslint-disable-next-line no-console
+      console.warn('[dawilog] init() called more than once; ignoring the new options');
+    }
+    return current;
+  }
   const client = new Client(options);
   current = client;
 

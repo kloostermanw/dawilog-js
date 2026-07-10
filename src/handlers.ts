@@ -15,10 +15,11 @@ export function installGlobalHandlers(client: Client): () => void {
     client.captureException(err);
   };
 
+  // pagehide is terminal: the page is going away, flush via sendBeacon.
   const onHidden = (): void => client.setUnloading(true);
-  const onVisibility = (): void => {
-    if (document.visibilityState === 'hidden') client.setUnloading(true);
-  };
+  // visibilitychange toggles both ways so backgrounding a tab does not latch the
+  // client onto sendBeacon (and its ~64KB cap) for the rest of the session.
+  const onVisibility = (): void => client.setUnloading(document.visibilityState === 'hidden');
 
   window.addEventListener('error', onError);
   window.addEventListener('unhandledrejection', onRejection);

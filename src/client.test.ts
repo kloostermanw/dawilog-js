@@ -47,8 +47,47 @@ describe('Client', () => {
     expect(sendSpy).not.toHaveBeenCalled();
   });
 
-  it('captureMessage sends a Message exception', () => {
-    new Client({ dsn: DSN }).captureMessage('hello');
-    expect(sendSpy.mock.calls[0][1].exceptions[0].type).toBe('Message');
+  it('captureMessage sends a Message exception with the level in meta', () => {
+    new Client({ dsn: DSN }).captureMessage('hello', 'warning');
+    const event = sendSpy.mock.calls[0][1];
+    expect(event.exceptions[0].type).toBe('Message');
+    expect(event.meta.dawilog_session_data.level).toBe('warning');
+  });
+
+  it('suppresses an identical error signature within the dedup window', () => {
+    const client = new Client({ dsn: DSN });
+    const boom = (): Error => {
+      const e = new Error('boom');
+      e.stack = 'Error: boom\n    at f (https://app/x.js:1:1)';
+      return e;
+    };
+    client.captureException(boom());
+    client.captureException(boom());
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
+  it('sends distinct errors even within the window', () => {
+    const client = new Client({ dsn: DSN });
+    client.captureException(new Error('one'));
+    client.captureException(new Error('two'));
+    expect(sendSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-sends the same signature after the dedup window elapses', () => {
+    vi.useFakeTimers();
+    try {
+      const client = new Client({ dsn: DSN });
+      const boom = (): Error => {
+        const e = new Error('boom');
+        e.stack = 'Error: boom\n    at f (https://app/x.js:1:1)';
+        return e;
+      };
+      client.captureException(boom());
+      vi.advanceTimersByTime(6000);
+      client.captureException(boom());
+      expect(sendSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -31,6 +31,18 @@ describe('installGlobalHandlers', () => {
     teardown();
   });
 
+  it('resets unloading to false when the tab becomes visible again', () => {
+    const client = new Client({ dsn: DSN });
+    const spy = vi.spyOn(client, 'setUnloading');
+    const teardown = installGlobalHandlers(client);
+
+    // jsdom reports visibilityState as 'visible' by default.
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(spy).toHaveBeenLastCalledWith(false);
+    teardown();
+  });
+
   it('teardown removes listeners', () => {
     const client = new Client({ dsn: DSN });
     const spy = vi.spyOn(client, 'captureException').mockImplementation(() => {});

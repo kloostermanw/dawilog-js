@@ -56,4 +56,13 @@ describe('buildMessageEvent', () => {
     const event = buildMessageEvent('hello', ctx());
     expect(event.exceptions[0]).toEqual({ type: 'Message', value: 'hello', trace: [] });
   });
+
+  it('records the level in meta without mutating scope tags', () => {
+    const scope = new Scope();
+    scope.setTag('plan', 'pro');
+    const event = buildMessageEvent('hello', ctx(scope), 'warning');
+    expect(event.meta.dawilog_session_data).toEqual({ plan: 'pro', level: 'warning' });
+    // scope.tags stays untouched
+    expect(scope.tags).toEqual({ plan: 'pro' });
+  });
 });

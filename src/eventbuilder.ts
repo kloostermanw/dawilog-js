@@ -1,4 +1,4 @@
-import type { DawilogEvent, Exception } from './types';
+import type { DawilogEvent, Exception, Level } from './types';
 import { Scope } from './scope';
 import { framesFromError } from './stacktrace';
 import { toAtom, generateEventId } from './util';
@@ -48,7 +48,19 @@ export function buildExceptionEvent(error: Error, ctx: BuildContext): DawilogEve
   return assemble([exception], ctx);
 }
 
-export function buildMessageEvent(message: string, ctx: BuildContext): DawilogEvent {
+export function buildMessageEvent(
+  message: string,
+  ctx: BuildContext,
+  level?: Level,
+): DawilogEvent {
   const exception: Exception = { type: 'Message', value: message, trace: [] };
-  return assemble([exception], ctx);
+  const event = assemble([exception], ctx);
+  if (level) {
+    // Copy so the event-local level does not mutate the shared scope tags.
+    event.meta.dawilog_session_data = {
+      ...(event.meta.dawilog_session_data as Record<string, unknown>),
+      level,
+    };
+  }
+  return event;
 }
