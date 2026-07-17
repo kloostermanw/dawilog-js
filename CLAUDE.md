@@ -1,6 +1,13 @@
 # This is the javascript packages for dawilog.
 
+# Application group
+This application belong to a group of dawilog applications
 
+| name        | github                                      |                  | local port |
+|-------------|---------------------------------------------|------------------|------------|
+| dawilog     | https://github.com/kloostermanw/dawilog     | main application | 8084       |
+| dawilog-php | https://github.com/kloostermanw/dawilog-php | php package      |            |
+| dawilog-js  | https://github.com/kloostermanw/dawilog-js  | js package       |            |
 
 ## Git workflow
 
