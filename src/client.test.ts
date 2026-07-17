@@ -41,6 +41,24 @@ describe('Client', () => {
     expect(sendSpy).not.toHaveBeenCalled();
   });
 
+  it('drops an opaque cross-origin "Script error." by default', () => {
+    const client = new Client({ dsn: DSN });
+    client.captureException(new Error('Script error.'));
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it('sends the opaque "Script error." when filtering is disabled', () => {
+    const client = new Client({ dsn: DSN, filterOpaqueScriptErrors: false });
+    client.captureException(new Error('Script error.'));
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
+  it('does not drop a real error whose message contains "Script error."', () => {
+    const client = new Client({ dsn: DSN });
+    client.captureException(new Error('Script error. while loading the editor'));
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
   it('drops the event when sampleRate is 0', () => {
     const client = new Client({ dsn: DSN, sampleRate: 0 });
     client.captureException(new Error('x'));

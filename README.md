@@ -86,6 +86,7 @@ in the dashboard.
 | `maxBreadcrumbs` | `30` | Breadcrumb buffer size |
 | `integrations` | all `true` | `{ console, dom, fetch, history }` toggles |
 | `beforeSend` | (none) | `(event) => event \| null`; return `null` to drop |
+| `filterOpaqueScriptErrors` | `true` | Drop browser-masked cross-origin `Script error.` events |
 | `debug` | `false` | Log internal errors/failures to the console |
 
 ## API
