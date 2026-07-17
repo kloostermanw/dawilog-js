@@ -59,6 +59,20 @@ describe('Client', () => {
     expect(sendSpy).toHaveBeenCalledOnce();
   });
 
+  it('does not drop a captureMessage whose text is "Script error."', () => {
+    const client = new Client({ dsn: DSN });
+    client.captureMessage('Script error.');
+    expect(sendSpy).toHaveBeenCalledOnce();
+  });
+
+  it('logs the dropped opaque "Script error." in debug mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const client = new Client({ dsn: DSN, debug: true });
+    client.captureException(new Error('Script error.'));
+    expect(sendSpy).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith('[dawilog] dropped opaque cross-origin "Script error." event');
+  });
+
   it('drops the event when sampleRate is 0', () => {
     const client = new Client({ dsn: DSN, sampleRate: 0 });
     client.captureException(new Error('x'));

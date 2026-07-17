@@ -35,6 +35,14 @@ describe('isOpaqueScriptError', () => {
     expect(isOpaqueScriptError(eventWith([{ value: 'Script error. while loading widget' }]))).toBe(false);
   });
 
+  it('is false for a captureMessage-style Message exception with the same text', () => {
+    expect(isOpaqueScriptError(eventWith([{ type: 'Message', value: 'Script error.' }]))).toBe(false);
+  });
+
+  it('is false when the exception value is not a string', () => {
+    expect(isOpaqueScriptError(eventWith([{ type: 'Error' }]))).toBe(false);
+  });
+
   it('is false when there is more than one exception', () => {
     expect(isOpaqueScriptError(eventWith([{ value: 'Script error.' }, { value: 'real' }]))).toBe(false);
   });

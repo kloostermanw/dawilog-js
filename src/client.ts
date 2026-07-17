@@ -109,8 +109,15 @@ export class Client {
   private dispatch(event: DawilogEvent): void {
     if (!this.enabled || !this.dsn) return;
     // Opaque cross-origin "Script error." events are unactionable third-party
-    // noise; drop them before beforeSend so consumers never have to filter them.
-    if (this.options.filterOpaqueScriptErrors && isOpaqueScriptError(event)) return;
+    // noise; drop them before beforeSend so consumers relying on the default
+    // never have to filter them.
+    if (this.options.filterOpaqueScriptErrors && isOpaqueScriptError(event)) {
+      if (this.options.debug) {
+        // eslint-disable-next-line no-console
+        console.warn('[dawilog] dropped opaque cross-origin "Script error." event');
+      }
+      return;
+    }
     let final: DawilogEvent | null = event;
     if (this.options.beforeSend) {
       try {
