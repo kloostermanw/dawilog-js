@@ -56,5 +56,11 @@ export interface DawilogOptions {
   maxBreadcrumbs?: number;
   integrations?: IntegrationOptions;
   beforeSend?: (event: DawilogEvent) => DawilogEvent | null;
+  /**
+   * Drop browser-masked cross-origin "Script error." events before they reach
+   * beforeSend (default true). These originate from third-party scripts or
+   * browser extensions and carry no actionable stack. Set false to receive them.
+   */
+  filterOpaqueScriptErrors?: boolean;
   debug?: boolean;
 }

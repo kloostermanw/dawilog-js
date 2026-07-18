@@ -3,12 +3,14 @@ import { parseDsn, type ParsedDsn } from './dsn';
 import { Scope } from './scope';
 import { buildExceptionEvent, buildMessageEvent, type BuildContext } from './eventbuilder';
 import { sendEvent } from './transport';
+import { isOpaqueScriptError } from './inboundfilters';
 
 interface ResolvedOptions extends DawilogOptions {
   environment: string;
   release: string;
   sampleRate: number;
   maxBreadcrumbs: number;
+  filterOpaqueScriptErrors: boolean;
 }
 
 // Suppress an identical error signature seen again within this window, so a
@@ -61,6 +63,7 @@ export class Client {
       ...options,
       sampleRate: normalizeSampleRate(options.sampleRate, options.debug),
       maxBreadcrumbs: normalizeMaxBreadcrumbs(options.maxBreadcrumbs, options.debug),
+      filterOpaqueScriptErrors: options.filterOpaqueScriptErrors ?? true,
     };
     this.scope = new Scope(this.options.maxBreadcrumbs);
     this.enabled = this.dsn !== null;
@@ -105,6 +108,16 @@ export class Client {
 
   private dispatch(event: DawilogEvent): void {
     if (!this.enabled || !this.dsn) return;
+    // Opaque cross-origin "Script error." events are unactionable third-party
+    // noise; drop them before beforeSend so consumers relying on the default
+    // never have to filter them.
+    if (this.options.filterOpaqueScriptErrors && isOpaqueScriptError(event)) {
+      if (this.options.debug) {
+        // eslint-disable-next-line no-console
+        console.warn('[dawilog] dropped opaque cross-origin "Script error." event');
+      }
+      return;
+    }
     let final: DawilogEvent | null = event;
     if (this.options.beforeSend) {
       try {
