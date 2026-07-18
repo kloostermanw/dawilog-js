@@ -5,11 +5,12 @@ target = main
 
 # cmd1 that runs after the release is created
 # cmd1 = none | vendor/bin/readmegen
-cmd1 = none
+# Rebuild dist/ from src/ so the committed build output is fresh for the tag.
+cmd1 = npm
 
 # cmd1_arguments belong by cmd1
 # cmd1_arguments = none | --from {current_release} --release {new_release}
-cmd1_arguments = --from {current_release} --release {new_release}
+cmd1_arguments = run build
 
 # Specify the editor of choice, this will open the editor after the release is created and the cmd1 has run
 # editor vim | nano | none
@@ -18,10 +19,11 @@ editor = none
 # The edit will load the following file
 # and this file will commited in the release branch
 # cmd1_filename = none | CHANGELOG.md
-cmd1_filename = none
+# dist is a folder; index.add recurses and commits all rebuilt files.
+cmd1_filename = dist
 
 # cmd1_commit_message
-cmd1_commit_message = none
+cmd1_commit_message = build: update dist
 
 # cmd2 that runs after cmd1
 # cmd2 = none

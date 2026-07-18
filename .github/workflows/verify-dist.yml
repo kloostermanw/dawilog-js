@@ -1,0 +1,33 @@
+name: verify-dist
+
+# The package ships its build output (dist/) in git so it can be consumed as a
+# git dependency without an install-time build. This workflow guarantees the
+# committed dist/ is never stale: it rebuilds from src/ and fails if the result
+# differs from what is checked in.
+
+on:
+  pull_request:
+  push:
+    branches: [develop, master]
+
+jobs:
+  verify-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Fail if dist/ is out of sync with src/
+        run: |
+          if ! git diff --exit-code -- dist/; then
+            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result."
+            exit 1
+          fi
